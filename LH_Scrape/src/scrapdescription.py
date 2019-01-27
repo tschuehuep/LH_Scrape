@@ -15,7 +15,7 @@ def parse_description(fullUrl, categoryId):
     descriptions = tree.xpath('//div[@id="descriptioncontent"]/text()')  # type: object
 
     # print descriptions
-    theOutput = open('description.out', 'a')
+    theOutput = open('output/description.out', 'a')
     if descriptions:
         theOutput.write(fullUrl + "\nDescription for "+str(categoryId)+"\n")
         for description in descriptions:

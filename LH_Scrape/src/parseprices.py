@@ -14,7 +14,7 @@ def parseAllPrices():
     conn, cursor = dbutils.create_connection()
     dbutils.create_price_table(cursor)
 
-    with open(file='SicherheitUndFlaggenPreise.csv',encoding='iso-8859-1') as csvfile:
+    with open(file='data/SicherheitUndFlaggenPreise.csv',encoding='iso-8859-1') as csvfile:
         readCSV = csv.reader(csvfile, delimiter=';')
         for row in readCSV:
             print(row)

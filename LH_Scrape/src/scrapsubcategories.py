@@ -5,7 +5,6 @@ import csv
 
 import requests
 from lxml import etree
-from requests import Response
 
 import dbutils
 from scraparticles import parse_articles
@@ -22,7 +21,7 @@ def parse_subcategories(cursor,mainCategory, domain):
     tree = etree.HTML(item.content, myparser)
     subCategories = tree.xpath('//a[@class="anav"]') # /li/p/a')  # type: object
 
-    theOutput = open('csv/subCategories.out', 'a')
+    theOutput = open('output/subCategories.out', 'a')
     allSubCategories = []
     allCategoriesForCSV = []
     subCategoryId = int(mainCategory['categoryId']) * 100
@@ -40,7 +39,7 @@ def parse_subcategories(cursor,mainCategory, domain):
 
 
     if allSubCategories:
-        with open(file='categories.csv', mode='a', encoding='UTF-8') as csvfile:
+        with open(file='csv/categories.csv', mode='a', encoding='UTF-8') as csvfile:
             fieldnames = ['categoryId', 'parentID', 'name', 'position', 'metatitle', 'metakeywords', 'metadescription',
                           'cmsheadline', 'cmstext', 'template', 'active', 'blog', 'external', 'hidefilter',
                           'attribute_attribute1', 'attribute_attribute2', 'attribute_attribute3', 'attribute_attribute4',
@@ -72,19 +71,19 @@ def parse_subcategories(cursor,mainCategory, domain):
     theOutput.close()
     return []
 
-theOutput = open('articles.out', 'w')
+theOutput = open('output/articles.out', 'w')
 theOutput.write('Another try\n')
 theOutput.close()
-theOutput = open('description.out', 'w')
+theOutput = open('output/description.out', 'w')
 theOutput.write('Another try\n')
 theOutput.close()
-theOutput = open('subCategories.out', 'w')
+theOutput = open('output/subCategories.out', 'w')
 theOutput.write('Another try\n')
 theOutput.close()
 parseAllPrices()
 myurl = input("which url?")
 
-with open(file='article-categories.csv', mode='a', encoding='UTF-8') as csvfile:
+with open(file='csv/article-categories.csv', mode='a', encoding='UTF-8') as csvfile:
     fieldnames = ['ordernumber', 'mainnumber', 'categoryId']
     filewriter = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';', quotechar='"')
     filewriter.writeheader()

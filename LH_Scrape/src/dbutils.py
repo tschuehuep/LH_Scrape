@@ -8,7 +8,7 @@ def create_connection():
         conn = sqlite3.connect('data/mydb')
         c = conn.cursor()
         return conn, c
-    except Error as e:
+    except Exception as e:
         print(e)
 
     return None
@@ -51,7 +51,7 @@ def insert_price(cursor, price):
                    price)
 
 def get_price(cursor,ordernumber):
-    print('getting price')
+    print('getting price for ' + ordernumber)
     cursor.execute('''SELECT price FROM price WHERE ordernumber = ?''',(ordernumber,))
     for row in cursor:
         # row[0] returns the first column in the query (categoryId), row[1] returns parentID column.

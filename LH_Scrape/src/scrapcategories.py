@@ -19,7 +19,7 @@ def parse_categories(conn,cursor,domain):
     categories = tree.xpath('//ul[@class="menuitems"]/li/p/a') # /li/p/a')  # type: object
 
     # print descriptions
-    theOutput = open('categories.out', 'w')
+    theOutput = open('output/categories.out', 'w')
     allCategories = []
     allCategoriesForCSV = []
     mainCategoryId = 10
@@ -36,7 +36,7 @@ def parse_categories(conn,cursor,domain):
 
         dbutils.insert_category(conn,{'categoryId': mainCategoryId, 'parentID': 3, 'name': text})
         mainCategoryId = mainCategoryId + 1
-    with open(file='categories.csv', mode='w', encoding='UTF-8') as csvfile:
+    with open(file='csv/categories.csv', mode='w', encoding='UTF-8') as csvfile:
         fieldnames = ['categoryId', 'parentID', 'name', 'position', 'metatitle', 'metakeywords', 'metadescription',
                       'cmsheadline', 'cmstext', 'template', 'active', 'blog', 'external', 'hidefilter',
                       'attribute_attribute1', 'attribute_attribute2', 'attribute_attribute3', 'attribute_attribute4',

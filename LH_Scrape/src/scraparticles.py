@@ -12,7 +12,6 @@ except ImportError:
 
 import requests
 from lxml import etree
-from requests import Response
 
 def parse_articles(cursor, fullUrl, subCategoryId):
     myparser = etree.HTMLParser(encoding="utf-8")
@@ -21,12 +20,15 @@ def parse_articles(cursor, fullUrl, subCategoryId):
     columns = tree.xpath('//table[@class="articles"]/tr[@class="columns"]/th/text()')  # type: object
 
     # print descriptions
-    theOutput = open('articles.out', 'a')
+    theOutput = open('output/articles.out', 'a')
     theheading = unquote(fullUrl.split('/')[-2])
     theOutput.write('\n' + fullUrl + '\n' + theheading + '\n')
     # The first column is the category id
     theOutput.write('categoryId;')
 
+    if ( columns.count("Artikelnummer") + columns.count("Art.-Nr.") ) > 1:
+        theOutput.write("\nSonderlocke für "+ fullUrl)
+        return
     # entry = {'categoryId': str(subCategoryId), 'parentID': mainCategory['categoryId'], 'name': textForCSV,
     #          'active': str(1)}
     #
@@ -36,7 +38,7 @@ def parse_articles(cursor, fullUrl, subCategoryId):
         #    sDesc = description.decode('UTF-8')
         #    theOutput.write(sDesc)
         theOutput.write(description.strip()+';')
-
+        
     theOutput.write('\n')
     numColumns = len(columns)
     # root.xpath(
@@ -53,7 +55,7 @@ def parse_articles(cursor, fullUrl, subCategoryId):
     # first all the rows
     rows = tree.xpath('//table[@class="articles"]/tr[starts-with(@class,"stdrow")]/td/text()')
 
-    with open(file='article-categories.csv', mode='a', encoding='UTF-8') as csvfile:
+    with open(file='csv/article-categories.csv', mode='a', encoding='UTF-8') as csvfile:
         fieldnames = ['ordernumber','mainnumber','categoryId']
         filewriter = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';',quotechar='"')
 
@@ -61,35 +63,43 @@ def parse_articles(cursor, fullUrl, subCategoryId):
         articlePos = 0
         presentColumn = 0
         description_long = scrapdescription.parse_description(fullUrl,subCategoryId)
-        # the image is only for the first item on the page
-        imageUrl = 'https://www.freyhuus.com/images/marintecShopware/' + articleNrs[0][:2] + '/' + articleNrs[0] + '.jpg'
 
         values = {}
-        if len(rows) == 1:
-            theOutput.write("\nFound a single item\n")
+        if len(rows) > 0:
+            # the image is only for the first item on the page
+            theOutput.write('\ngetting image for ' + articleNrs[0][:2])
+            imageUrl = 'https://www.freyhuus.com/images/marintecShopware/' + articleNrs[0][:2] + '/' + articleNrs[0] + '.jpg'
+            if len(rows) == 1:
+                theOutput.write("\nFound a single item\n")
+            else:
+                theOutput.write("\nFound multiple items\n")
+            for row in rows:
+                theOutput.write('\nprocessing row/column <' + str(row) + '>/<'+ str(presentColumn) +'>')
+                if presentColumn == 0:
+                    print('trying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
+                    theOutput.write('\ntrying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
+                    articleNumber = articleNrs[articlePos]
+                    articleNumberInt = int(articleNumber)
+                    theOutput.write('\ngetting ' + str(articleNumberInt) + ' at pos '+str(articlePos) + '\n')
+                    theOutput.write('\nrow is <'+row + '>')
+                    entry = {'ordernumber': articleNumber,'mainnumber': articleNumber,
+                             'categoryId': str(subCategoryId/100)} # category from the parent
+                    filewriter.writerow(entry)
+                    theOutput.write('\n'+str(subCategoryId) + ';' + articleNumber + ';' )
+                    articlePos += 1
+                entry['name'] = mainpagename
+                entry['description_long'] = description_long
+                entry['imageUrl'] = imageUrl
+                values[columns[presentColumn+1]] = row.strip()
+                theOutput.write('\nline 94 '+row.strip() + ';')
+                presentColumn = presentColumn + 1
+                if presentColumn == numColumns - 1:
+                    entry['values'] = values
+                    theOutput.write('\n')
+                    writearticlescsv.write_article(cursor,entry)
+                    presentColumn = 0
         else:
-            theOutput.write("\nFound multiple items\n")
-        for row in rows:
-            if presentColumn == 0:
-                theOutput.write('trying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
-                articleNumber = articleNrs[articlePos]
-                theOutput.write('getting ' + str(articleNumber) + ' at pos '+str(articlePos) + '\n')
-                theOutput.write(row)
-                entry = {'ordernumber': articleNumber,'mainnumber': articleNumber,
-                         'categoryId': str(subCategoryId/100)} # category from the parent
-                filewriter.writerow(entry)
-                theOutput.write(str(subCategoryId) + ';' + articleNumber + ';' )
-                articlePos += 1
-            entry['name'] = mainpagename
-            entry['description_long'] = description_long
-            entry['imageUrl'] = imageUrl
-            values[columns[presentColumn+1]] = row.strip()
-            theOutput.write(row.strip() + ';')
-            presentColumn = presentColumn + 1
-            if presentColumn == numColumns - 1:
-                entry['values'] = values
-                theOutput.write('\n')
-                writearticlescsv.write_article(cursor,entry)
-                presentColumn = 0
-
+            theOutput.write("\nFound no item\n")
+           
+                
 

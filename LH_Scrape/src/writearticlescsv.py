@@ -6,7 +6,7 @@ import dbutils
 
 def write_article(cursor, article):
 
-    with open(file='articles.csv', mode='a', encoding='UTF-8') as csvfile:
+    with open(file='csv/articles.csv', mode='a', encoding='UTF-8') as csvfile:
         fieldnames = ['ordernumber','mainnumber','name','additionalText','supplier','tax',
                         'price_SC','pseudoprice_SC','baseprice_SC','from_SC','to_SC',
                         'price_EK','pseudoprice_EK','baseprice_EK','from_EK','to_EK',
@@ -42,7 +42,7 @@ def write_article(cursor, article):
         filewriter.writerow(rowEntry)
 
 def create_articles_file():
-    with open(file='articles.csv', mode='w', encoding='UTF-8') as csvfile:
+    with open(file='csv/articles.csv', mode='w', encoding='UTF-8') as csvfile:
         fieldnames = ['ordernumber', 'mainnumber', 'name', 'additionalText', 'supplier', 'tax',
                       'price_SC', 'pseudoprice_SC', 'baseprice_SC', 'from_SC', 'to_SC',
                       'price_EK', 'pseudoprice_EK', 'baseprice_EK', 'from_EK', 'to_EK',
