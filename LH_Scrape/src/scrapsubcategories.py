@@ -22,7 +22,7 @@ def parse_subcategories(cursor,mainCategory, domain):
     tree = etree.HTML(item.content, myparser)
     subCategories = tree.xpath('//a[@class="anav"]') # /li/p/a')  # type: object
 
-    theOutput = open('subCategories.out', 'a')
+    theOutput = open('csv/subCategories.out', 'a')
     allSubCategories = []
     allCategoriesForCSV = []
     subCategoryId = int(mainCategory['categoryId']) * 100
