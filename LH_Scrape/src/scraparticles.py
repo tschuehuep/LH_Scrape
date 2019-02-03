@@ -12,6 +12,12 @@ except ImportError:
 
 import requests
 from lxml import etree
+from lxml import objectify
+
+def startswithArt(element):
+    if (str(element).startswith('Art')):
+        return True
+    return False
 
 def parse_articles(cursor, fullUrl, subCategoryId):
     myparser = etree.HTMLParser(encoding="utf-8")
@@ -26,6 +32,10 @@ def parse_articles(cursor, fullUrl, subCategoryId):
     # The first column is the category id
     theOutput.write('categoryId;')
 
+    numOfArticleColumns = len(list(filter(startswithArt,columns)))
+
+    numOfNonArticleNumberColumns = len(columns) - numOfArticleColumns
+    
     if ( columns.count("Artikelnummer") + columns.count("Art.-Nr.") ) > 1:
         theOutput.write("\nSonderlocke für "+ fullUrl)
         return
@@ -34,6 +44,7 @@ def parse_articles(cursor, fullUrl, subCategoryId):
     #
     # entry = {'categories':str(subCategoryId)}
     # entry = {'ordernumber':str(),'mainnumber','name','description_long','categories','propertyValueName','imageUrl']
+    theOutput.write('\nColumns for '+fullUrl+'\n')
     for description in columns:
         #    sDesc = description.decode('UTF-8')
         #    theOutput.write(sDesc)
@@ -52,8 +63,10 @@ def parse_articles(cursor, fullUrl, subCategoryId):
     # articleNr = tree.xpath('//table[@class="articles"]/tr[re:test(local-name(),".*stdrow1.*"])]/td/span/text()',
     #                        namespaces={'re': "http://exslt.org/regular-expressions"})
 
-    # first all the rows
-    rows = tree.xpath('//table[@class="articles"]/tr[starts-with(@class,"stdrow")]/td/text()')
+    # only the none article number elements
+    nonArticleNumberElements = tree.xpath('//table[@class="articles"]/tr[starts-with(@class,"stdrow")]/td[position()>'+str(numOfArticleColumns)+']/text()')
+    # first all the allElements
+    allElements = tree.xpath('//table[@class="articles"]/tr[starts-with(@class,"stdrow")]/td/text()')
 
     with open(file='csv/article-categories.csv', mode='a', encoding='UTF-8') as csvfile:
         fieldnames = ['ordernumber','mainnumber','categoryId']
@@ -65,33 +78,37 @@ def parse_articles(cursor, fullUrl, subCategoryId):
         description_long = scrapdescription.parse_description(fullUrl,subCategoryId)
 
         values = {}
-        if len(rows) > 0:
+        if len(nonArticleNumberElements) > 0:
             # the image is only for the first item on the page
             theOutput.write('\ngetting image for ' + articleNrs[0][:2])
             imageUrl = 'https://www.freyhuus.com/images/marintecShopware/' + articleNrs[0][:2] + '/' + articleNrs[0] + '.jpg'
-            if len(rows) == 1:
+            if len(nonArticleNumberElements) == numOfNonArticleNumberColumns:
                 theOutput.write("\nFound a single item\n")
             else:
                 theOutput.write("\nFound multiple items\n")
-            for row in rows:
-                theOutput.write('\nprocessing row/column <' + str(row) + '>/<'+ str(presentColumn) +'>')
+            presentRow = 0
+            # Now going through only the non-article number elements
+            for anElement in nonArticleNumberElements:
+                theOutput.write('\nprocessing anElement/column <' + str(anElement).strip() + '>/<'+ str(presentColumn) +'>')
                 if presentColumn == 0:
-                    print('trying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
-                    theOutput.write('\ntrying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
+#                     print('column 0 trying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
+#                     theOutput.write('\ntrying to get pos ' + str(articlePos) + ' from ' + str(articleNrs) + 'and present column '+ str(presentColumn) +'\n')
+#                     if (articlePos > (len(articleNrs) - 1)):
+#                         theOutput.write('too many');
                     articleNumber = articleNrs[articlePos]
-                    articleNumberInt = int(articleNumber)
-                    theOutput.write('\ngetting ' + str(articleNumberInt) + ' at pos '+str(articlePos) + '\n')
-                    theOutput.write('\nrow is <'+row + '>')
+#                     articleNumberInt = int(articleNumber)
+#                     theOutput.write('\ncolumn 0 getting ' + str(articleNumberInt) + ' at pos '+str(articlePos) + '\n')
+#                     theOutput.write('\ncolumn 0 element is <'+anElement + '>')
                     entry = {'ordernumber': articleNumber,'mainnumber': articleNumber,
                              'categoryId': str(subCategoryId/100)} # category from the parent
                     filewriter.writerow(entry)
-                    theOutput.write('\n'+str(subCategoryId) + ';' + articleNumber + ';' )
+#                     theOutput.write('\ncolumn 0 subCat '+str(subCategoryId) + '; articleNum ' + articleNumber + ';' )
                     articlePos += 1
                 entry['name'] = mainpagename
                 entry['description_long'] = description_long
                 entry['imageUrl'] = imageUrl
-                values[columns[presentColumn+1]] = row.strip()
-                theOutput.write('\nline 94 '+row.strip() + ';')
+                values[columns[presentColumn+numOfArticleColumns]] = anElement.strip()
+                theOutput.write('\nline 97 <'+anElement.strip() + '>; at column '+str(presentColumn) + ' of ' + str(numColumns))
                 presentColumn = presentColumn + 1
                 if presentColumn == numColumns - 1:
                     entry['values'] = values
